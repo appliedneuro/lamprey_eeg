@@ -1,14 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 
 #include "thinkgear.h"
 
 /**
  * Prompts and waits for the user to press ENTER.
  */
-void
-wait() {
+void wait() {
     printf( "\n" );
     printf( "Press the ENTER key...\n" );
     fflush( stdout );
@@ -27,23 +27,40 @@ main( void ) {
     int   packetsRead  = 0;
     int   errCode      = 0;
     
+	double raw = 0;
+	double deltaPrev = 0;
+	
+	double delta = 0;
+	double theta = 0;
+	double alpha1 = 0;
+	double alpha2 = 0;
+	double beta1 = 0;
+	double beta2 = 0;
+	double gamma1 = 0;
+	double gamma2 = 0;
+	double attention = 0;
+	double meditation = 0;
+
     double secondsToRun = 0;
     time_t startTime    = 0;
     time_t currTime     = 0;
     char  *currTimeStr  = NULL;
 	int set_filter_flag = 0;
 	int count = 0;
+
+	FILE * pFile;
+	//string filename;
     
     /* Print driver version number */
     dllVersion = TG_GetVersion();
-    printf( "Stream SDK for PC version: %d\n", dllVersion );
+    //printf( "Stream SDK for PC version: %d\n", dllVersion );
     
     /* Get a connection ID handle to ThinkGear */
     connectionId = TG_GetNewConnectionId();
     if( connectionId < 0 ) {
         fprintf( stderr, "ERROR: TG_GetNewConnectionId() returned %d.\n",
                 connectionId );
-        wait();
+        //wait();
         exit( EXIT_FAILURE );
     }
     
@@ -51,7 +68,7 @@ main( void ) {
     errCode = TG_SetStreamLog( connectionId, "streamLog.txt" );
     if( errCode < 0 ) {
         fprintf( stderr, "ERROR: TG_SetStreamLog() returned %d.\n", errCode );
-        wait();
+       //wait();
         exit( EXIT_FAILURE );
     }
     
@@ -59,7 +76,7 @@ main( void ) {
     errCode = TG_SetDataLog( connectionId, "dataLog.txt" );
     if( errCode < 0 ) {
         fprintf( stderr, "ERROR: TG_SetDataLog() returned %d.\n", errCode );
-        wait();
+        //wait();
         exit( EXIT_FAILURE );
     }
     
@@ -77,14 +94,15 @@ main( void ) {
                          TG_STREAM_PACKETS );
     if( errCode < 0 ) {
         fprintf( stderr, "ERROR: TG_Connect() returned %d.\n", errCode );
-        wait();
+       //wait();
         exit( EXIT_FAILURE );
     }
     
     /* Keep reading ThinkGear Packets from the connection for 5 seconds... */
     secondsToRun = 60;
     startTime = time( NULL );
-    while( difftime(time(NULL), startTime) < secondsToRun ) {
+
+    while(1) {
         
         /* Read all currently available Packets, one at a time... */
         do {
@@ -98,18 +116,46 @@ main( void ) {
                 /* If the Packet containted a new raw wave value... */
                 if( TG_GetValueStatus(connectionId, TG_DATA_RAW) != 0 ) {
                     
+					//fprintf(stdout, "Please input a file name\n");
+					//fscanf(stdin, filename);
+					//filename += ".txt";
+
                     /* Get the current time as a string */
                     currTime = time( NULL );
         			currTimeStr = ctime( &currTime );
                     
                     /* Get and print out the new raw value */
                     //fprintf( stdout, "%s: raw: %d\n", currTimeStr,
-                    //        (int)TG_GetValue(connectionId, TG_DATA_RAW) );
+                    //       (int)TG_GetValue(connectionId, TG_DATA_RAW) );
                     //fflush( stdout );
 
 					/* Get and print out the new raw value */
-					fprintf( stdout,  "raw: %d\n", (int)TG_GetValue(connectionId, TG_DATA_RAW) );
-					fflush( stdout );
+					//fprintf( stdout,  "BETA: %d\n", (int)TG_GetValue(connectionId, TG_DATA_BETA1) );
+					
+					raw = TG_GetValue(connectionId, TG_DATA_RAW);
+					delta = TG_GetValue(connectionId, TG_DATA_DELTA);
+					theta = TG_GetValue(connectionId, TG_DATA_THETA);
+					alpha1 = TG_GetValue(connectionId, TG_DATA_ALPHA1);
+					alpha2 = TG_GetValue(connectionId, TG_DATA_ALPHA2);
+					beta1 = TG_GetValue(connectionId, TG_DATA_BETA1);
+					beta2 = TG_GetValue(connectionId, TG_DATA_BETA2);
+					gamma1 = TG_GetValue(connectionId, TG_DATA_GAMMA1);
+					gamma2 = TG_GetValue(connectionId, TG_DATA_GAMMA2);
+					attention = TG_GetValue(connectionId, TG_DATA_ATTENTION);
+					meditation = TG_GetValue(connectionId, TG_DATA_MEDITATION);
+
+					if (delta!= deltaPrev) {
+						//pFile = fopen("attention_baseline.txt", "a");
+						//fprintf(pFile, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", (int)delta, (int)theta, (int)alpha1, (int)alpha2, (int)beta1, (int)beta2, (int)gamma1, (int)gamma2, (int)attention, (int)meditation);
+						//fclose(pFile);
+
+						deltaPrev = delta;
+
+						fprintf(stdout, "%d\r\n", (int)(attention));
+						fflush(stdout);
+					}
+						
+					
                     
                 } /* end "If Packet contained a raw wave value..." */
                 
@@ -176,6 +222,6 @@ main( void ) {
     TG_FreeConnection( connectionId );
     
     /* End program */
-    wait();
+    //wait();
     return( EXIT_SUCCESS );
 }
